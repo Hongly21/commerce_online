@@ -42,14 +42,14 @@ Backend (Admin Panel)
 
 <table>
   <tr>
-    <td><img src="userpage.png" alt="Homepage" width="300"/></td>
-    <td><img src="userpage2.png" alt="Product Detail" width="300"/></td>
-    <td><img src="userpage3.png" alt="Cart Page" width="300"/></td>
-    <td><img src="userpage4.png" alt="Checkout Page" width="300"/></td>
+    <td><img src="image/userpage.png" alt="Homepage" width="300"/></td>
+    <td><img src="image/userpage2.png" alt="Product Detail" width="300"/></td>
+    <td><img src="image/userpage3.png" alt="Cart Page" width="300"/></td>
+    <td><img src="image/userpage4.png" alt="Checkout Page" width="300"/></td>
   </tr>
   <tr>
-    <td><img src="userpage5.png" alt="Order Confirmation" width="300"/></td>
-    <td><img src="userpage6.png" alt="Homepage Alt" width="300"/></td>
+    <td><img src="image/userpage5.png" alt="Order Confirmation" width="300"/></td>
+    <td><img src="image/userpage6.png" alt="Homepage Alt" width="300"/></td>
   </tr>
 </table>
 
@@ -57,15 +57,15 @@ Admin Panel
 
 <table>
   <tr>
-    <td><img src="Loginpage.png" alt="Admin Login" width="300"/></td>
-    <td><img src="admindashbord.png" alt="Dashboard Overview" width="300"/></td>
-    <td><img src="adminpro.png" alt="Product List" width="300"/></td>
-    <td><img src="admincate.png" alt="Category List" width="300"/></td>
+    <td><img src="image/Loginpage.png" alt="Admin Login" width="300"/></td>
+    <td><img src="image/admindashbord.png" alt="Dashboard Overview" width="300"/></td>
+    <td><img src="image/adminpro.png" alt="Product List" width="300"/></td>
+    <td><img src="image/admincate.png" alt="Category List" width="300"/></td>
   </tr>
   <tr>
-    <td><img src="adminallpro.png" alt="Stock Overview" width="300"/></td>
-    <td><img src="admidorderreport.png" alt="OrderReport" width="300"/></td>
-    <td><img src="changepwd.png" alt="Change Password" width="300"/></td>
+    <td><img src="image/adminallpro.png" alt="Stock Overview" width="300"/></td>
+    <td><img src="image/admidorderreport.png" alt="OrderReport" width="300"/></td>
+    <td><img src="image/changepwd.png" alt="Change Password" width="300"/></td>
   </tr>
 </table>
 
