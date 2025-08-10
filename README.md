@@ -64,7 +64,7 @@ Admin Panel
   </tr>
   <tr>
     <td><img src="adminallpro.png" alt="Stock Overview" width="300"/></td>
-    <td><img src="adminorderreport.png" alt="OrderReport" width="300"/></td>
+    <td><img src="admidorderreport.png" alt="OrderReport" width="300"/></td>
     <td><img src="changepwd.png" alt="Change Password" width="300"/></td>
   </tr>
 </table>
