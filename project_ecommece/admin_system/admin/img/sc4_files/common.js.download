@@ -1,0 +1,744 @@
+app.controller('navigation', ['$scope', '$http', '$filter', '$timeout', function($scope, $http, $filter, $timeout) {
+  $(document).ready(function(){ 
+    $scope.get_address()
+  });
+  
+  $scope.close_location_popup = function() {
+    $('#location_popup').modal('hide')
+    $('#location_popup_signin').modal('hide')
+  }
+
+  $('.cls_address').on('click', function() {
+    let show_popup = true
+    $scope.get_address(show_popup)
+  })
+
+  $scope.get_address = function(show_popup = false) {
+    $('#location_popup .modal-body').addClass('loading')
+    $http.get(APP_URL + '/get_user_address', {}).then(function(response) {
+      $scope.user_logging = response.data.user_logging;
+      if(!response.data.user_logging) {
+        $('.user_address_target').attr('data-target', '#location_popup_signin')
+        show_popup && CURRENT_ROUTE_NAME != 'products.category' ? $('#location_popup_signin').modal('show') : ''
+      } else {
+        if(response.data.user.addresses.length > 0) {
+          show_popup && CURRENT_ROUTE_NAME != 'products.category' ? $('#location_popup').modal('show') : ''
+          $('.user_name_text').text('Deliver to ')
+          $scope.user_css = {
+            "max-width": "70px",
+            "display": "inline-block",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "vertical-align": "bottom"
+          }
+          $scope.address_css = {
+            "max-width": "75px",
+            "display": "inline-block",
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "line-height": "17px",
+            "vertical-align": "bottom"
+          }
+          $('.cls_user_name').text(response.data.user.name).css($scope.user_css)
+          $scope.user_address = response.data.user.addresses
+          $scope.user = response.data.user
+
+          let default_address = response.data.user.addresses[0]
+          $('#address_city').val(default_address.city)
+          $('.default_address').text(default_address.city).css($scope.address_css)
+          $timeout(function () {
+            $('#city_'+default_address.city).addClass('active')
+          }, 500)
+          $('.cls_pincode').text(default_address.postal_code)
+        } else {
+          show_popup && CURRENT_ROUTE_NAME != 'products.category' ? $('#location_popup').modal('show') : ''
+          $('#location_popup .address_list').text('You dont have any addresses click the below link to add')
+        }
+
+        if(CURRENT_ROUTE_NAME == 'home') {
+          featured()
+          best_selling()
+          home_categories()
+          best_sellers()
+          today_deal()
+          flash_deal()
+          preorder()
+
+        }
+      }
+      $('#location_popup .modal-body').removeClass('loading')
+    });
+  }
+
+  $scope.change_address = function(address) {
+    $('#address_city').val(address.city)
+    $('.city_lists').removeClass('active')
+    $('#city_'+address.city).addClass('active')
+    $('#location_popup .close').trigger('click')
+    $('.user_name_text').text('Deliver to ')
+    $('.cls_user_name').text($scope.user.name).css($scope.user_css)
+    $('.default_address').text(address.city).css($scope.address_css)
+    $('.cls_pincode').text(address.postal_code)
+    if(CURRENT_ROUTE_NAME == 'home') {
+      today_deal()
+      featured()
+      best_selling()
+      home_categories()
+      flash_deal()
+      preorder()
+    }
+
+    $scope.change_order(address.id)
+  }
+
+  $scope.change_order = function(address_id) {
+    $http.post(APP_URL + '/update_address_order', {address_id : address_id, _token: AIZ.data.csrf }).then(function(response) {
+      if(CURRENT_ROUTE_NAME != 'home') {
+        document.location.reload(true)
+      }
+    });
+  }
+}]);
+
+app.controller('MerchantSubscription', ['$scope', '$http', '$compile', '$timeout','$filter', function($scope, $http, $compile, $timeout,$filter) {
+  $scope.applyPlanData = function(data){
+    console.log(data)
+      if(data=='' || data==undefined)
+      $scope.planData=[];
+      else
+      $scope.planData=angular.fromJson(data);
+    }
+
+  $(document).ready(function(){
+    $("#merchantSubscriptionForm").validate({
+      ignore: ':hidden:not(.do-not-ignore)',
+      onkeyup: false,
+      onfocusout: false,
+      rules: {       
+        plan_name: { required: true },
+        description: { required: true },
+        tagline: { required: true },
+        no_of_products: { required: true,digits: true,min:1 },
+        price: {required: true,number: true,min:1 },
+        currency: { required: true },
+        duration: { required: true },
+      },
+      messages: {       
+      },
+      errorElement: "span",
+      errorClass: "text-danger",
+      errorPlacement: function( label, element ) {
+        if(element.attr( "data-error-placement" ) === "container" ){
+          container = element.attr('data-error-container');
+          $(container).append(label);
+        } else {
+          label.insertAfter( element ); 
+        }
+      }
+    });
+  });
+
+
+
+$(document).on('click','.current_merchant_id',function(){
+   $('#current_merchant_id').val($(this).attr("data-user-id"));
+});
+
+$(document).on('click','.show_subscription_histroy',function(){
+    var data = [];
+  $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        url: subscription_histroy+'/'+$('#current_merchant_id').val(),
+        type: 'GET',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (response) {
+          $scope.subscription_history=JSON.parse(response);
+           if(!$scope.$$phase) {
+            $scope.$apply();
+          }
+          setTimeout(function() {
+          $('#subscription_history').modal('show');
+        },400);
+          
+          
+          console.log($scope.subscription_history);
+        }
+    });
+});
+
+}]);
+app.controller('Subscription', ['$scope', '$http', '$compile', '$timeout','$filter', function($scope, $http, $compile, $timeout,$filter) {
+    
+    $scope.resetCustomPlan = function(){
+        if($scope.is_free=='Yes'){
+            $scope.custom_plan='No';
+        }
+    }
+
+    
+
+    $("#subscriptionForm").validate({
+      ignore: ':hidden:not(.do-not-ignore)',
+      onkeyup: false,
+      onfocusout: false,
+      rules: {       
+        plan_name: { required: true },
+        description: { required: true },
+        tagline: { required: true },
+        no_of_products: { required: true,digits: true,min:1 },
+        price: {required: true,number: true,min:1 },
+        currency: { required: true },
+        status: { required: true },
+        duration: { required: true },
+      },
+      messages: {       
+      },
+      errorElement: "span",
+      errorClass: "text-danger",
+      errorPlacement: function( label, element ) {
+        if(element.attr( "data-error-placement" ) === "container" ){
+          container = element.attr('data-error-container');
+          $(container).append(label);
+        } else {
+          label.insertAfter( element ); 
+        }
+      }
+    });
+$(document).on('click','.subscriptionSubmit',function(){
+    $('.subscriptionForm').each(function () {
+        $(this).rules("add", {
+            required: true
+        });
+    });
+});
+
+}]);
+
+app.filter('checkKeyValueUsedInStack', ["$filter", function($filter) {
+  return function(value, key, stack) {
+    var found = $filter('filter')(stack, {locale: value},true);
+    var found_text = $filter('filter')(stack, {key: ''+value}, true);
+    return !found.length && !found_text.length;
+  };
+}]);
+
+$(document).ready(function(){
+  $("table").wrap('<div class="table-responsive"></div>');
+});
+app.controller('fields_controller', function($scope, $http) {
+  function loadjscssfile(filename, filetype){
+    if (filetype=="js"){ //if filename is a external JavaScript file
+        var fileref=document.createElement('script')
+        fileref.setAttribute("type","text/javascript")
+        fileref.setAttribute("src", filename)
+    }
+    else if (filetype=="css"){ //if filename is an external CSS file
+        var fileref=document.createElement("link")
+        fileref.setAttribute("rel", "stylesheet")
+        fileref.setAttribute("type", "text/css")
+        fileref.setAttribute("href", filename)
+    }
+    if (typeof fileref!="undefined")
+        document.getElementsByTagName("head")[0].appendChild(fileref)
+}
+  $scope.addNewRowSingle = function() {
+    $scope.single_options.push([]);
+  };
+
+  $scope.removeRowSingle = function(index) {
+    $scope.single_options.splice(index, 1 );
+  };
+
+  $scope.addNewRowMultiple = function() {
+    $scope.multiple_options.push([]);
+  };
+
+  $scope.removeRowMultiple = function(index) {
+    $scope.multiple_options.splice(index, 1 );
+  };
+
+  $scope.addNewRowMultilevel = function() {
+    $scope.parents.push([]);
+    $scope.childrens.push([]);
+    loadjscssfile("https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css", "css");
+    loadjscssfile("https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js", "js");
+    loadjscssfile("https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.js", "js");
+  };
+
+  $scope.removeRowMultilevel = function(index) {
+    $scope.parents.splice(index, 1 );
+    $scope.childrens.splice(index, 1 );
+  };
+
+});
+
+app.controller('products_controller', function($scope, $http) {
+  $scope.category_field_options=[];
+  function getCategoryFilters(){
+
+    $scope.childrens = [];
+    $scope.Filters = [];
+    var category_id = $('#category_id').val();
+     $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        type:"POST",
+        url:APP_URL + '/admin/getCategoryFilterOptions', 
+        data:{'category_id': category_id},
+        success: function(data) {
+           $scope.category_field_options = data;
+           if(!$scope.$$phase)             
+            $scope.$apply();
+           console.log($scope.category_field_options.length);
+        }
+    });
+  }
+  $(document).on('change', '#category_id', function(){
+    getCategoryFilters();
+    if(!$scope.$$phase)             
+      $scope.$apply();
+  });
+
+   $(document).on('change', '.multilevel', function(){
+
+      var index = $(this).attr('id');
+      if($(this).val() ==''){
+        $scope.childrens[index] = [];
+      }
+
+      var category_id = $('#category_id').val();
+      var multilevel = $(this).find('option:selected').attr('data-key');
+      var multilevel_id = $(this).find('option:selected').attr('id');
+      $scope.multilevel_id = multilevel_id;
+
+      var field_id =$(this).find('option:selected').attr('id');
+
+      if(!multilevel){
+         $scope.multilevel_value = [];
+          if(!$scope.$$phase)             
+             $scope.$apply();
+        return false;
+      }
+     $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        type:"POST",
+        url:APP_URL + '/admin/getMultilevelValue', 
+        data:{'multilevel_id': multilevel,'category_id':category_id,'field_id':field_id},
+        success: function(response) {
+          $scope.childrens[index] = JSON.parse(response);
+
+           if(!$scope.$$phase)             
+             $scope.$apply();
+        }
+    });
+  });
+
+  $(document).ready(function(){
+    defaultgetCategoryFilters();
+    setTimeout(getChiled, 1000);
+    setTimeout(add_getChiled, 1000);
+     if(!$scope.$$phase)             
+      $scope.$apply();
+
+    
+  });
+
+  function defaultgetCategoryFilters(){
+
+    var category_id = $('#category_id').val();
+    $.ajax({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      type:"POST",
+      url:APP_URL + '/admin/getCategoryFilterOptions', 
+      data:{'category_id': category_id},
+      success: function(data) {
+        $scope.category_field_options = data;
+        if(!$scope.$$phase)             
+        $scope.$apply();
+      }
+    });
+  }
+
+
+
+  /*** Edit Page ***/
+  $(document).on('change', '.edit_multilevel', function(){
+
+      var index_val = $(this).attr('id');
+      if($(this).val() ==''){
+        $scope.multi_childrens[index_val] = [];
+      }
+      var category_id = $('#category_id').val();
+      var multilevel = $(this).find('option:selected').attr('data-key');
+      var multilevel_id = $(this).find('option:selected').attr('id');
+      $scope.multilevel_id = multilevel_id;
+
+      var field_id =$(this).find('option:selected').attr('id');
+
+      if(!multilevel){
+         $scope.multilevel_value = [];
+          if(!$scope.$$phase)             
+             $scope.$apply();
+            return false;
+      }
+
+
+     $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        type:"POST",
+        url:APP_URL + '/admin/getMultilevelValue', 
+        data:{'multilevel_id': multilevel,'category_id':category_id,'field_id':field_id},
+        success: function(response) {
+
+          $scope.multi_childrens[index_val] = JSON.parse(response);
+
+           if(!$scope.$$phase)             
+             $scope.$apply();
+        }
+    });
+  });
+
+
+  function getChiled(){
+
+
+      $('.edit_multilevel').each(function() {
+
+        if($(this).val()!=''){
+          var parent = $(this).val();
+          var id = $(this).attr('data-key');
+          var index = $(this).attr('id');
+
+          $.ajax({
+              headers: {
+                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+              },
+              type:"POST",
+              url:APP_URL + '/get_categories', 
+              data:{'parent': parent, 'id': id},
+              success: function(data) {
+
+                  $scope.multi_childrens[index] = data;
+                  if(!$scope.$$phase)             
+                    $scope.$apply();
+              }
+          });  
+      }else {
+          $scope.multi_childrens=[];
+
+      }
+
+      });
+
+
+   }
+     function add_getChiled(){
+
+      $('.multilevel').each(function() {
+
+
+        if($(this).val()!=''){
+          var parent = $(this).val();
+            console.log(parent);
+            var id = $(this).attr('data-key');
+            var index = $(this).attr('id');
+
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                type:"POST",
+                url:APP_URL + '/get_categories', 
+                data:{'parent': parent, 'id': id},
+                success: function(data) {
+
+                    $scope.childrens[index] = data;
+                    if(!$scope.$$phase)             
+                      $scope.$apply();
+                }
+            });  
+         
+      }else {
+          $scope.childrens=[];
+
+      }
+
+      });
+
+
+   }
+});
+
+app.controller('marchant_products_controller', function($scope, $http) {
+
+  $(document).ready(function(){
+    defaultgetCategoryFilters();
+    setTimeout(getChiled, 1000);    
+    setTimeout(add_getChiled, 1000);    
+  });
+
+
+  $(document).on('change', '#category_id', function(){
+    getCategoryFilters()
+  });
+
+  function getCategoryFilters(){
+    var category_id = $('#category_id').val();
+    $scope.childrens = [];
+    
+    $.ajax({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      type:"POST",
+      url:APP_URL + '/getCategoryFilterOptions', 
+      data:{'category_id': category_id},
+      success: function(data) {
+        $scope.category_field_options = data;
+        if(!$scope.$$phase)             
+        $scope.$apply();
+      }
+    });
+  }
+
+  function defaultgetCategoryFilters(){
+    var category_id = $('#category_id').val();
+    $.ajax({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      type:"POST",
+      url:APP_URL + '/getCategoryFilterOptions', 
+      data:{'category_id': category_id},
+      success: function(data) {
+        $scope.category_field_options = data;
+        if(!$scope.$$phase)             
+        $scope.$apply();
+      }
+    });
+
+  }
+
+  $(document).on('change', '.multilevel', function(){
+
+      var Value  = $(this).val();
+      var index = $(this).attr('id');
+      
+      if(!Value)
+          $scope.childrens[index] = [];
+
+      var category_id = $('#category_id').val();
+      var multilevel = $(this).find('option:selected').attr('data-key');
+      var multilevel_id = $(this).find('option:selected').attr('id');
+      $scope.multilevel_id = multilevel_id;
+
+      var field_id =$(this).find('option:selected').attr('id');
+
+      if(!multilevel){
+         $scope.multilevel_value = [];
+          if(!$scope.$$phase)             
+             $scope.$apply();
+        return false;
+      }
+     $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        type:"POST",
+        url:APP_URL + '/getMultilevelValue', 
+        data:{'multilevel_id': multilevel,'category_id':category_id,'field_id':field_id},
+        success: function(response) {
+          $scope.childrens[index] = JSON.parse(response);
+
+           if(!$scope.$$phase)             
+             $scope.$apply();
+        }
+    });
+  }); 
+  $(document).on('change', '.edit_multilevel', function(){
+
+      var index = $(this).attr('id');
+      var Value  = $(this).val();
+      
+      if(!Value)
+          $scope.multi_childrens[index] = [];
+
+      var category_id = $('#category_id').val();
+      var multilevel = $(this).find('option:selected').attr('data-key');
+      var multilevel_id = $(this).find('option:selected').attr('id');
+      $scope.multilevel_id = multilevel_id;
+
+      var field_id =$(this).find('option:selected').attr('id');
+
+      if(!multilevel){
+         $scope.multilevel_value = [];
+          if(!$scope.$$phase)             
+             $scope.$apply();
+        return false;
+      }
+     $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        type:"POST",
+        url:APP_URL + '/getMultilevelValue', 
+        data:{'multilevel_id': multilevel,'category_id':category_id,'field_id':field_id},
+        success: function(response) {
+          $scope.multi_childrens[index] = JSON.parse(response);
+
+           if(!$scope.$$phase)             
+             $scope.$apply();
+        }
+    });
+  });
+
+    function getChiled(){
+
+
+      $('.edit_multilevel').each(function() {
+
+        if($(this).val()!=''){
+          var parent = $(this).val();
+          var id = $(this).attr('data-key');
+          var index = $(this).attr('id');
+
+          $.ajax({
+              headers: {
+                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+              },
+              type:"POST",
+              url:APP_URL + '/get_categories', 
+              data:{'parent': parent, 'id': id},
+              success: function(data) {
+
+                  $scope.multi_childrens[index] = data;
+                  if(!$scope.$$phase)             
+                    $scope.$apply();
+              }
+          });  
+      }else {
+          $scope.multi_childrens=[];
+
+      }
+
+      });
+
+
+   }
+
+   function add_getChiled(){
+
+
+      $('.multilevel').each(function() {
+
+        if($(this).val()!=''){
+          var parent = $(this).val();
+          var id = $(this).attr('data-key');
+          var index = $(this).attr('id');
+
+          $.ajax({
+              headers: {
+                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+              },
+              type:"POST",
+              url:APP_URL + '/get_categories', 
+              data:{'parent': parent, 'id': id},
+              success: function(data) {
+
+                  $scope.childrens[index] = data;
+                  if(!$scope.$$phase)             
+                    $scope.$apply();
+              }
+          });  
+      }else {
+          $scope.childrens=[];
+
+      }
+
+      });
+
+
+   }
+
+});
+
+
+app.controller('products_listing_controller', function($scope, $http) {
+  $scope.category_childrens=[];
+
+  $(document).ready(function(){getChiled();});
+
+
+   $(document).on('change', '.parent_name', function(){
+
+      if($(this).val()!=''){
+
+        var parent = $(this).val();
+        var id = $(this).data('id');
+        var index = $(this).attr('data-key');
+
+        $.ajax({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            type:"POST",
+            url:APP_URL + '/getChildrens', 
+            data:{'parent': parent, 'id': id},
+            success: function(data) {
+
+                $scope.category_childrens[index] = data;
+                if(!$scope.$$phase)             
+                  $scope.$apply();
+            }
+        });  
+      }else {
+          $scope.category_childrens=[];
+
+      }
+      if(!$scope.$$phase)             
+        $scope.$apply();
+    });
+
+   function getChiled(){
+
+      $('.parent_name').each(function() {
+        if($(this).val()!=''){
+
+        var parent = $(this).val();
+        var id = $(this).data('id');
+        var index = $(this).attr('data-key');
+
+        $.ajax({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            type:"POST",
+            url:APP_URL + '/getChildrens', 
+            data:{'parent': parent, 'id': id},
+            success: function(data) {
+
+                $scope.category_childrens[index] = data;
+                if(!$scope.$$phase)             
+                  $scope.$apply();
+            }
+        });  
+      }else {
+          $scope.category_childrens=[];
+
+      }
+      });
+   }
+});
